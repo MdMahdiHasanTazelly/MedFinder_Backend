@@ -1,9 +1,13 @@
 import express from 'express';
 import 'dotenv/config';
 
-import {DoctrosSchema} from './schemas/DoctorsSchema.js';
-import { HospitalsSchema } from './schemas/HospitalsSchema.js';
-import { AdminSchema } from './schemas/AdminSchema.js';
+// import {DoctorsSchema} from './schemas/DoctorsSchema.js';
+// import { HospitalsSchema } from './schemas/HospitalsSchema.js';
+// import { AdminSchema } from './schemas/AdminSchema.js';
+
+import {DoctorsModel} from './models/DoctorsModel.js';
+import { HospitalsModel } from './models/HospitalsModel.js';
+import {AdminModel} from './models/AdminModel.js';
 
 
 const app = express();
