@@ -6,6 +6,11 @@ const DoctorsSchema = new Schema({
         type: String,
         required: true
     },
+    dRegNo:{
+        type: String,
+        require: true,
+        unique: true,
+    },
     degree: {
         type: String,
         required: true

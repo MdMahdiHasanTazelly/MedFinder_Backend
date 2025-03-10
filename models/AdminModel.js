@@ -11,7 +11,8 @@ export const AdminSchema = new Schema({
     },
     password: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
     },
 });
 

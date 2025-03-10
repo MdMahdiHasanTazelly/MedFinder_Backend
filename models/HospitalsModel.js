@@ -1,8 +1,13 @@
-
 import { Schema, mongoose } from "mongoose";
 import {DoctorsModel} from "../models/DoctorsModel.js";
+import { type } from "os";
 
 const HospitalsSchema = new Schema({
+    hRegNo: {
+        type: String,
+        require: true,
+        unique: true,
+    },
     name: {
         type: String,
         required: true
