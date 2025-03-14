@@ -1,4 +1,5 @@
 import { Schema, mongoose } from "mongoose";
+import { type } from "os";
 
 export const AdminSchema = new Schema({
     username: {
@@ -14,6 +15,9 @@ export const AdminSchema = new Schema({
         required: true,
         unique: true,
     },
+    sessiontoken: {
+        type: String,
+    }
 });
 
 export const AdminModel = mongoose.model("admin", AdminSchema);
