@@ -8,6 +8,7 @@ import { HospitalsModel } from './models/HospitalsModel.js';
 import {AdminModel} from './models/AdminModel.js';
 
 import { authenticate, generateToken } from './utils/middleware.js';
+import { executionAsyncResource } from 'async_hooks';
 
 
 const app = express();
@@ -74,12 +75,35 @@ app.get("/admin/logout", async(req, res)=>{
         console.log(error);
         res.status(500).json({message: "Internal server error!"});
     }
-})
+});
+
+// ----------------------------HOSPITALS ROUTE--------------------------------
+
 
 app.get("/hospitals", async(req, res)=>{
     const hospitals = await HospitalsModel.find();
     res.json(hospitals);
 });
+
+
+app.get("/hospitals/search", async(req, res)=>{
+    try{
+        let {query} = req.query;
+        if( !query ){
+            return res.status(400).json({message: "Query is required."});
+        }
+        const hospitals = await HospitalsModel.find({
+            name: { $regex: query, $options: "i"}    //case-insensitive search based on given query for hopital name
+        });
+        if( hospitals.length ===0 ){
+            return res.status(400).json({message: "No hospital is found!"});
+        }
+        res.json(hospitals);
+    }catch(error){
+        return res.status(500).json({message: "Internal server error."});
+    }
+});
+
 
 app.get("/hospitals/:id", async(req, res)=>{
     try{
@@ -163,6 +187,24 @@ app.put("/hospitals/:id", async(req, res)=>{
 app.get("/doctors", async(req, res)=>{
     const doctors = await DoctorsModel.find();
     res.json(doctors);
+})
+
+app.get("/doctors/search", async(req, res)=>{
+    try{
+        let {query} = req.query;
+        if( !query ){
+            return res.status(400).json({message: "Query is required."});
+        }
+        const doctors = await DoctorsModel.find({
+            name: {$regex: query, $options: "i"}  //applyying case-insensitive search for doctors name based query
+        });
+        if( doctors.length === 0){
+            return res.status(400).json({message: "No such doctors."});
+        }
+        res.json(doctors);
+    }catch(error){
+        return res.status(500).json({message: "Internal server error."});
+    }
 })
 
 app.get("/doctors/:id", async(req, res)=>{
