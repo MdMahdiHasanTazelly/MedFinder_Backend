@@ -8,8 +8,7 @@ import {DoctorsModel} from './models/DoctorsModel.js';
 import { HospitalsModel } from './models/HospitalsModel.js';
 import {AdminModel} from './models/AdminModel.js';
 
-import { generateToken } from './utils/middleware.js';
-import { error } from 'console';
+import { generateToken , isWhiteSpace} from './utils/middleware.js';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -142,6 +141,18 @@ app.post("/hospitals", async(req, res)=>{
         ){
             return res.status(400).json({error: "Fill all the informaitions."});
         }
+
+        // checking whether only whitespace or not
+        if(
+            isWhiteSpace(hospital.hRegNo) ||
+            isWhiteSpace(hospital.name) ||
+            isWhiteSpace(hospital.contactNo) ||
+            isWhiteSpace(hospital.location.district) ||
+            isWhiteSpace(hospital.location.subDistrict) ||
+            isWhiteSpace(hospital.location.holdingNo)
+        ){
+            return res.status(400).json({error: "Fill all the informaitions correctly"});
+        }
         const newHospital = await HospitalsModel(hospital);
         await newHospital.save()
         
@@ -183,6 +194,19 @@ app.put("/hospitals/:id", async(req, res)=>{
         ){
             return res.status(400).json({error: "Fill all the informaitions."});
         }
+
+        // checking whether only whitespace or not
+        if(
+            isWhiteSpace(updated.hRegNo) ||
+            isWhiteSpace(updated.name) ||
+            isWhiteSpace(updated.contactNo) ||
+            isWhiteSpace(updated.location.district) ||
+            isWhiteSpace(updated.location.subDistrict) ||
+            isWhiteSpace(updated.location.holdingNo)
+        ){
+            return res.status(400).json({error: "Fill all the informaitions correctly"});
+        }
+
         const hospital = await HospitalsModel.findByIdAndUpdate(id, {...updated});
         if (hospital){
             console.log(updated);
@@ -252,6 +276,18 @@ app.post("/doctors", async(req, res)=>{
         ){
             return res.status(400).json({message: "Fill all informations."});
         }
+
+        // checking whether only whitespace or not
+        if(
+            isWhiteSpace(doctor.dRegNo) ||
+            isWhiteSpace(doctor.name) ||
+            isWhiteSpace(doctor.contactNo) ||
+            isWhiteSpace(doctor.degree) ||
+            isWhiteSpace(doctor.specialization) 
+        ){
+            return res.status(400).json({error: "Fill all the informaitions correctly"});
+        }
+
         const newDoctor = await DoctorsModel(doctor);
         await newDoctor.save()
         res.json({message: "Doctors information is saved."});
@@ -266,11 +302,23 @@ app.post("/doctors", async(req, res)=>{
 //adds hospitals registration number to doctors profile
 app.put("/doctors/addHReg/:id", async(req, res)=>{
     let{id} = req.params;
-    let{regNo} = req.body;
+    let{regNo, days, time} = req.body;
     const doctor = await DoctorsModel.findById(id);
     // if the hospital is already added
     if (doctor.hospitals.includes(regNo)) {
         return res.status(400).json({ error: "Hospital is already added!" });
+    }
+
+    if(!regNo || !days || !time){
+        return res.status(400).json({error: "Enter all the informations."});
+    }
+
+    if(
+        isWhiteSpace(regNo) ||
+        isWhiteSpace(days) ||
+        isWhiteSpace(time)
+    ){
+        return res.status(400).json({error: "Enter all the informations correctly."});
     }
 
     const allHospital = await HospitalsModel.find({hRegNo: regNo});
@@ -279,17 +327,18 @@ app.put("/doctors/addHReg/:id", async(req, res)=>{
     }
 
     //adding hospitals registration number
-    doctor.hospitals.push(regNo);
+    doctor.hospitals.push({hRegNo: regNo, days, time});
     await doctor.save();
 
     return res.json({message: "Hospital's registration number is added!"});
 });
 
 
-app.put("/doctors/:id", async(req, res)=>{
+app.put("/doctors/:id/update", async(req, res)=>{
     try{
         let {id} = req.params;
         let update = req.body;
+        console.log(update);
         if(
             !update.name ||
             !update.dRegNo ||
@@ -298,6 +347,16 @@ app.put("/doctors/:id", async(req, res)=>{
             !update.contactNo
         ){
             return res.status(400).json({error: "Fill all informations."});
+        }
+
+        if(
+            isWhiteSpace(update.name) ||
+            isWhiteSpace(update.dRegNo) ||
+            isWhiteSpace(update.degree) ||
+            isWhiteSpace(update.specialization) ||
+            isWhiteSpace(update.contactNo)
+        ){
+            return res.status(400).json({error: "Enter all the informations correctly."});
         }
         const doctor = await DoctorsModel.findById(id);
         if(!doctor){

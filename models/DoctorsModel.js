@@ -25,7 +25,9 @@ const DoctorsSchema = new Schema({
     },
     hospitals: [
         {
-            type: String,
+            hRegNo: {type: String, required: true},
+            days: {type: String, required: true},
+            time: {type: String, required: true},
         }
     ]
 });
