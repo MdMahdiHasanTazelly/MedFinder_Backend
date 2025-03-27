@@ -25,8 +25,7 @@ const DoctorsSchema = new Schema({
     },
     hospitals: [
         {
-            type: Schema.Types.ObjectId,
-            ref: "HospitalsModel"
+            type: String,
         }
     ]
 });

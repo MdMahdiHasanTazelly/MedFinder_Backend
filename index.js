@@ -2,14 +2,14 @@ import express from 'express';
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 
 import {DoctorsModel} from './models/DoctorsModel.js';
 import { HospitalsModel } from './models/HospitalsModel.js';
 import {AdminModel} from './models/AdminModel.js';
 
-import { authenticate, generateToken } from './utils/middleware.js';
-import { executionAsyncResource } from 'async_hooks';
-
+import { generateToken } from './utils/middleware.js';
+import { error } from 'console';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -23,6 +23,9 @@ app.listen(PORT,
     }
 );
 
+//allows only frontend to fetch data
+app.use(cors({origin: process.env.FRONTEND_URL}));
+
 //helps to parse json data
 app.use(express.json());
 //helps to parse url-encoded form data
@@ -31,10 +34,10 @@ app.use(cookieParser());
 
 // for testing purpose
 app.get("/test", (req, res)=>{
-    res.json({"message": "This is for testing!"});
+    res.json({message: "This is for testing!"});
 });
 
-app.get("/admin/login", 
+app.post("/admin/login", 
     async(req, res)=>{
         try{
             const {email, password} = req.body;
@@ -44,7 +47,7 @@ app.get("/admin/login",
                 const loginToken = await generateToken();
                 admin.sessiontoken = loginToken;
                 admin.save();
-                return res.cookie('sessiontoken',loginToken).json({message: "Login Successfull!"});
+                return res.json({message: "Login Successfull!", sessiontoken: loginToken});
             }else{
                 return res.status(400).json({error: "Invalid credentials!"});
             }
@@ -54,10 +57,11 @@ app.get("/admin/login",
 });
 
 
-app.get("/admin/logout", async(req, res)=>{
+app.post("/admin/logout", async(req, res)=>{
     try{
-        const sessiontoken = req.cookies.sessiontoken;
+        const {sessiontoken} = req.body;
         const admin = await AdminModel.findOne({sessiontoken: `${sessiontoken}`});
+        
         const newAdmin = await AdminModel({
             username: admin.username,
             email: admin.email,
@@ -144,13 +148,13 @@ app.post("/hospitals", async(req, res)=>{
         res.json({message: "Hospital is added."});
         
     }catch(error){
-        console.log(error);
         if(error.code === 11000){
-            return res.json({message: "Registration number should be unique."}).status(400);
+            return res.status(400).json({error: "Registration number should be unique."});
         }
-        res.status(500).json({message: "Internal server error."});
+        res.status(500).json({error: "Internal server error."});
     }
-})
+});
+
 
 app.delete("/hospitals/:id", async(req, res)=>{
     try{
@@ -170,6 +174,15 @@ app.put("/hospitals/:id", async(req, res)=>{
     try{
         let {id} = req.params;
         let updated = req.body;
+        if( !updated.hRegNo ||
+            !updated.name ||
+            !updated.contactNo ||
+            !updated.location.district ||
+            !updated.location.subDistrict ||
+            !updated.location.holdingNo 
+        ){
+            return res.status(400).json({error: "Fill all the informaitions."});
+        }
         const hospital = await HospitalsModel.findByIdAndUpdate(id, {...updated});
         if (hospital){
             console.log(updated);
@@ -223,7 +236,7 @@ app.get("/doctors/:id", async(req, res)=>{
 
         res.json(doctor);
     }catch(err){
-        res.status(400).json({message: "Internal Server error."});
+        res.status(400).json({error: "Internal Server error."});
     }
 })
 
@@ -237,7 +250,7 @@ app.post("/doctors", async(req, res)=>{
             !doctor.specialization ||
             !doctor.contactNo
         ){
-            return res.status(400).json({error: "Fill all informations."});
+            return res.status(400).json({message: "Fill all informations."});
         }
         const newDoctor = await DoctorsModel(doctor);
         await newDoctor.save()
@@ -250,20 +263,52 @@ app.post("/doctors", async(req, res)=>{
     }
 });
 
+//adds hospitals registration number to doctors profile
+app.put("/doctors/addHReg/:id", async(req, res)=>{
+    let{id} = req.params;
+    let{regNo} = req.body;
+    const doctor = await DoctorsModel.findById(id);
+    // if the hospital is already added
+    if (doctor.hospitals.includes(regNo)) {
+        return res.status(400).json({ error: "Hospital is already added!" });
+    }
+
+    const allHospital = await HospitalsModel.find({hRegNo: regNo});
+    if(allHospital.length === 0){
+        return res.status(400).json({error: "Hospital is not affiliated with this application!"});
+    }
+
+    //adding hospitals registration number
+    doctor.hospitals.push(regNo);
+    await doctor.save();
+
+    return res.json({message: "Hospital's registration number is added!"});
+});
+
+
 app.put("/doctors/:id", async(req, res)=>{
     try{
         let {id} = req.params;
         let update = req.body;
+        if(
+            !update.name ||
+            !update.dRegNo ||
+            !update.degree ||
+            !update.specialization ||
+            !update.contactNo
+        ){
+            return res.status(400).json({error: "Fill all informations."});
+        }
         const doctor = await DoctorsModel.findById(id);
         if(!doctor){
-            return res.status(400).json({message: "No such doctor Found."});
+            return res.status(400).json({error: "No such doctor Found."});
         }
         
         const updatedDoc = await DoctorsModel.findByIdAndUpdate(id, {...update});
         console.log(updatedDoc);
         res.json({message: "Information is updated."});
     }catch(error){
-        res.status(500).json({message: "Internal server error."});
+        res.status(500).json({error: "Internal server error."});
     }
 
 });
@@ -279,7 +324,6 @@ app.delete("/doctors/:id", async(req, res)=>{
         console.log(doctor);
         res.json({message: "Doctor is deleted."});
     }catch(error){
-        console.log(error)
-        res.status(500).json({message: "Internal server error."})
+        res.status(500).json({error: "Internal server error."})
     }
 });

@@ -1,6 +1,5 @@
 import { Schema, mongoose } from "mongoose";
 import {DoctorsModel} from "../models/DoctorsModel.js";
-import { type } from "os";
 
 const HospitalsSchema = new Schema({
     hRegNo: {
@@ -18,8 +17,7 @@ const HospitalsSchema = new Schema({
     },
     doctors: [
         {
-            type: Schema.Types.ObjectId,
-            ref: 'DoctorsModel'
+            type: String,
         }
     ],
     location:{
