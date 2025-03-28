@@ -9,6 +9,8 @@ import { HospitalsModel } from './models/HospitalsModel.js';
 import {AdminModel} from './models/AdminModel.js';
 
 import { generateToken , isWhiteSpace} from './utils/middleware.js';
+import { copyFileSync } from 'fs';
+import { error } from 'console';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -253,16 +255,17 @@ app.get("/doctors/:id", async(req, res)=>{
         }
 
         let doctor = await DoctorsModel.findById(id);
-    
+
         if( !doctor ){
             return res.json({error: "Doctor not found!"});
         }
 
         res.json(doctor);
     }catch(err){
+        console.log(err);
         res.status(400).json({error: "Internal Server error."});
     }
-})
+});
 
 app.post("/doctors", async(req, res)=>{
     try{
@@ -299,6 +302,39 @@ app.post("/doctors", async(req, res)=>{
     }
 });
 
+// to get doctor specific hospital details
+
+app.get("/doctors/:id/hospital-detail", async(req, res)=>{
+    try{
+        let {id} = req.params;
+        const doctor = await DoctorsModel.findById(id);
+        if( !doctor ){
+            return res.status(400).json({error: "No doctor found"});
+        }
+        const regNo = doctor.dRegNo;
+        //returns those hospitals details, are stored in doctor's hospital array
+        const hospitals = await HospitalsModel.find({
+            hRegNo: { $in: doctor.hospitals.map(h => h.hRegNo) }
+        });
+    
+        const hospitalDetails = hospitals.map( (hospital)=>{
+            //return doctors information if hospital's hRegNo is in doctor's hospital array
+            const doctorInfo = doctor.hospitals.find( (d)=> d.hRegNo===hospital.hRegNo );
+            return {
+                name: hospital.name,
+                contact: hospital.contactNo,
+                days: doctorInfo.days,
+                time: doctorInfo.time,
+            }
+        });
+        res.json(hospitalDetails);
+
+    }catch(error){
+        console.log(error);
+        res.status(500).json({message: "Internal Server Error."});
+    }
+});
+
 //adds hospitals registration number to doctors profile
 app.put("/doctors/addHReg/:id", async(req, res)=>{
     let{id} = req.params;
@@ -327,7 +363,9 @@ app.put("/doctors/addHReg/:id", async(req, res)=>{
     }
 
     //adding hospitals registration number
-    doctor.hospitals.push({hRegNo: regNo, days, time});
+    doctor.hospitals.push({
+        hRegNo: regNo, days, time
+    });
     await doctor.save();
 
     return res.json({message: "Hospital's registration number is added!"});

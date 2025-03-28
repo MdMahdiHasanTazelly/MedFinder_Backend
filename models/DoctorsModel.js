@@ -28,6 +28,8 @@ const DoctorsSchema = new Schema({
             hRegNo: {type: String, required: true},
             days: {type: String, required: true},
             time: {type: String, required: true},
+            name: String,
+            contactNo: String
         }
     ]
 });
