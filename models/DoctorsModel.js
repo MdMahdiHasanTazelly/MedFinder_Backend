@@ -1,5 +1,6 @@
 import { Schema, mongoose } from "mongoose";
 import {HospitalsModel} from "../models/HospitalsModel.js"
+import { type } from "os";
 
 const DoctorsSchema = new Schema({
     name: {
@@ -22,6 +23,9 @@ const DoctorsSchema = new Schema({
     contactNo: {
         type: String,
         required: true
+    },
+    currentRole: {
+        type: String,
     },
     hospitals: [
         {

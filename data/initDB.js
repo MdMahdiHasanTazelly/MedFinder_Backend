@@ -20,8 +20,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 async function main() {
     await mongoose.connect(process.env.DB_URL);
     doctorsInit();
-    hospitalsInit();
-    adminInit();
+    // hospitalsInit();
+    // adminInit();
 }
 main()
 .then( ()=> console.log(`DB is connected`))

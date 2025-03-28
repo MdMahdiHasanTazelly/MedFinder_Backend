@@ -9,8 +9,6 @@ import { HospitalsModel } from './models/HospitalsModel.js';
 import {AdminModel} from './models/AdminModel.js';
 
 import { generateToken , isWhiteSpace} from './utils/middleware.js';
-import { copyFileSync } from 'fs';
-import { error } from 'console';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -275,6 +273,7 @@ app.post("/doctors", async(req, res)=>{
             !doctor.dRegNo ||
             !doctor.degree ||
             !doctor.specialization ||
+            !doctor.currentRole ||
             !doctor.contactNo
         ){
             return res.status(400).json({message: "Fill all informations."});
@@ -286,7 +285,8 @@ app.post("/doctors", async(req, res)=>{
             isWhiteSpace(doctor.name) ||
             isWhiteSpace(doctor.contactNo) ||
             isWhiteSpace(doctor.degree) ||
-            isWhiteSpace(doctor.specialization) 
+            isWhiteSpace(doctor.specialization) ||
+            isWhiteSpace(doctor.currentRole)
         ){
             return res.status(400).json({error: "Fill all the informaitions correctly"});
         }
@@ -405,6 +405,7 @@ app.put("/doctors/:id/update", async(req, res)=>{
             !update.dRegNo ||
             !update.degree ||
             !update.specialization ||
+            !update.currentRole ||
             !update.contactNo
         ){
             return res.status(400).json({error: "Fill all informations."});
@@ -415,6 +416,7 @@ app.put("/doctors/:id/update", async(req, res)=>{
             isWhiteSpace(update.dRegNo) ||
             isWhiteSpace(update.degree) ||
             isWhiteSpace(update.specialization) ||
+            isWhiteSpace(update.currentRole) ||
             isWhiteSpace(update.contactNo)
         ){
             return res.status(400).json({error: "Enter all the informations correctly."});
