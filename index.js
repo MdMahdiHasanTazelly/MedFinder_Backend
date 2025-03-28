@@ -302,8 +302,7 @@ app.post("/doctors", async(req, res)=>{
     }
 });
 
-// to get doctor specific hospital details
-
+// to get a doctor's chambers information
 app.get("/doctors/:id/hospital-detail", async(req, res)=>{
     try{
         let {id} = req.params;
@@ -321,6 +320,7 @@ app.get("/doctors/:id/hospital-detail", async(req, res)=>{
             //return doctors information if hospital's hRegNo is in doctor's hospital array
             const doctorInfo = doctor.hospitals.find( (d)=> d.hRegNo===hospital.hRegNo );
             return {
+                hRegNo: hospital.hRegNo,
                 name: hospital.name,
                 contact: hospital.contactNo,
                 days: doctorInfo.days,
@@ -332,6 +332,29 @@ app.get("/doctors/:id/hospital-detail", async(req, res)=>{
     }catch(error){
         console.log(error);
         res.status(500).json({message: "Internal Server Error."});
+    }
+});
+
+//to delete a doctors chamber
+app.delete("/doctors/:id/hospital-detail/:hRegNo", async(req, res)=>{
+    try{
+        let{id, hRegNo} = req.params;
+        const doctor = await DoctorsModel.findById(id);
+        const updatedHospitals = doctor.hospitals.filter(
+             doctor=> hRegNo!=doctor.hRegNo
+        );
+        
+        const updatedDoctor = await DoctorsModel.findOneAndUpdate(
+            { _id: id }, // Find doctor by ID
+            { $set: { hospitals: updatedHospitals } }, // Update only hospitals array
+            { new: true }
+        );
+        
+        console.log(updatedDoctor);
+
+        res.json({message: "Chamber information is deleted."});
+    }catch(error){
+        res.status(500).json({error: "Internal server error!"});
     }
 });
 
