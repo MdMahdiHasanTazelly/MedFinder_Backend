@@ -37,4 +37,18 @@ const HospitalsSchema = new Schema({
     }
 });
 
+
+//deleting hRegNo from doctor whenever a hospital is deleted 
+HospitalsSchema.post("findOneAndDelete", async (doctor)=>{
+    if(doctor){
+        const hRegNo = doctor.hRegNo;
+        await DoctorsModel.updateMany(
+            {"hospitals.hRegNo": hRegNo},  //finds doctors having the deleted hospital
+            {$pull: {hospitals: {hRegNo: hRegNo} } }  //deleting hospitals 
+        );
+    }
+});
+
 export const HospitalsModel = mongoose.model("hospital", HospitalsSchema);
+
+
